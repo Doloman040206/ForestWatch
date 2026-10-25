@@ -1,0 +1,136 @@
+{% extends "base.html" %}{% block title %}Аналітика і звіти{% endblock %} {%
+block content %}
+<div class="page-heading reveal">
+  <div>
+    <div class="eyebrow">АНАЛІТИЧНИЙ ЦЕНТР</div>
+    <h1>Аналітика і звіти</h1>
+    <p class="text-muted mb-0">
+      Зведення записів з реєстру.
+    </p>
+  </div>
+  <button class="btn btn-outline-secondary" onclick="window.print()">
+    <i class="bi bi-printer me-1"></i>Друк звіту
+  </button>
+</div>
+<div class="report-grid reveal">
+  <section class="panel-card report-card">
+    <div class="report-title">
+      <span class="report-icon red"><i class="bi bi-fire"></i></span>
+      <div>
+        <h2>Пожежі за статусом</h2>
+        <p>Розподіл зареєстрованих пожеж</p>
+      </div>
+    </div>
+    {% for r in data.fires_by_status %}
+    <div class="bar-row">
+      <div><span>{{ r.Status }}</span><strong>{{ r.Total }}</strong></div>
+      <div class="bar-track">
+        {% set status_width = [r.Total * 10, 100]|min %}
+        <div
+          class="bar-fill fire-fill"
+          style="--w: {{ status_width }}%;
+                  width: var(--w)"
+        ></div>
+      </div>
+    </div>
+    {% else %}
+    <p class="empty-inline">Даних поки немає.</p>
+    {% endfor %}
+  </section>
+  <section class="panel-card report-card">
+    <div class="report-title">
+      <span class="report-icon amber"
+        ><i class="bi bi-exclamation-triangle"></i
+      ></span>
+      <div>
+        <h2>Підозри за пріоритетом</h2>
+        <p>Розподіл сигналів</p>
+      </div>
+    </div>
+    {% for r in data.suspicions_by_priority %}
+    <div class="bar-row">
+      <div><span>{{ r.Priority }}</span><strong>{{ r.Total }}</strong></div>
+      <div class="bar-track">
+        {% set priority_width = [r.Total * 10, 100]|min %}
+        <div
+          class="bar-fill risk-fill"
+          style="--w: {{ priority_width }}%;
+          width: var(--w)"
+        ></div>
+      </div>
+    </div>
+    {% else %}
+    <p class="empty-inline">Даних поки немає.</p>
+    {% endfor %}
+  </section>
+  <section class="panel-card report-card">
+    <div class="report-title">
+      <span class="report-icon green"
+        ><i class="bi bi-thermometer-half"></i
+      ></span>
+      <div>
+        <h2>Оцінки ризику</h2>
+        <p>Кількість за рівнями</p>
+      </div>
+    </div>
+    {% for r in data.risk_by_level %}
+    <div class="bar-row">
+      <div><span>{{ r.RiskLevel }}</span><strong>{{ r.Total }}</strong></div>
+      <div class="bar-track">
+        {% set width_percent = [r.Total * 10, 100]|min %}
+        <div
+          class="bar-fill green-fill"
+          style="--w: {{ width_percent }}%;
+          width: var(--w)"
+        ></div>
+      </div>
+    </div>
+    {% else %}
+    <p class="empty-inline">Даних поки немає.</p>
+    {% endfor %}
+  </section>
+</div>
+<div class="section-heading mt-4">
+  <div>
+    <h2>Хронологія пожеж</h2>
+    <p>Останні події та часові позначки реагування.</p>
+  </div>
+</div>
+<div class="panel-card">
+  <div class="table-responsive">
+    <table class="table align-middle mb-0">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Виявлено</th>
+          <th>Підтверджено</th>
+          <th>Локалізовано</th>
+          <th>Ліквідовано</th>
+          <th>Статус</th>
+          <th>Площа, га</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in data.response %}
+        <tr>
+          <td>#{{ r.FireID }}</td>
+          <td>{{ r.DetectedAt or '—' }}</td>
+          <td>{{ r.ConfirmedAt or '—' }}</td>
+          <td>{{ r.LocalizedAt or '—' }}</td>
+          <td>{{ r.ExtinguishedAt or '—' }}</td>
+          <td><span class="table-tag">{{ r.Status }}</span></td>
+          <td>{{ r.AreaHectares if r.AreaHectares is not none else '—' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="empty-state">
+            <i class="bi bi-bar-chart"></i
+            ><strong>Немає даних для звіту</strong>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

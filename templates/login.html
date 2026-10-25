@@ -1,0 +1,63 @@
+{% extends "base.html" %}{% block title %}Вхід{% endblock %} {% block content %}
+<div class="login-layout reveal">
+  <div class="login-art">
+    <div class="eyebrow">ЗАХИЩЕНИЙ ДОСТУП</div>
+    <h1>
+      Ваша варта
+      <br />
+      починається тут.
+    </h1>
+    <p>
+      Єдина система для раннього виявлення займань, моніторингу лісових ділянок
+      і координації польотів.
+    </p>
+    <div class="login-forest">🌲 🌲 🌲 🌲</div>
+    <div class="login-badge">
+      <i class="bi bi-shield-lock"></i> Контроль доступу
+    </div>
+  </div>
+  <div class="login-form-panel">
+    <div class="login-icon">
+      <i class="bi bi-person-lock"></i>
+    </div>
+    <h2>Вхід до системи</h2>
+    <p class="text-muted">
+      Використайте обліковий запис, створений адміністратором.
+    </p>
+    <form method="post" class="mt-4">
+      <label class="form-label" for="login">Логін</label>
+      <div class="input-icon">
+        <i class="bi bi-person"></i>
+        <input
+          class="form-control"
+          id="login"
+          name="login"
+          required
+          autocomplete="username"
+          placeholder="Ваш логін"
+        />
+      </div>
+      <label class="form-label mt-3" for="password">Пароль</label>
+      <div class="input-icon">
+        <i class="bi bi-key"></i>
+        <input
+          class="form-control"
+          id="password"
+          name="password"
+          type="password"
+          required
+          autocomplete="current-password"
+          placeholder="Ваш пароль"
+        />
+      </div>
+      <button class="btn btn-forest w-100 mt-4" type="submit">
+        Увійти <i class="bi bi-arrow-right ms-1"></i>
+      </button>
+    </form>
+    <div class="login-help">
+      <i class="bi bi-info-circle"></i> Самостійна реєстрація вимкнена: облікові
+      записи створює адміністратор.
+    </div>
+  </div>
+</div>
+{% endblock %}

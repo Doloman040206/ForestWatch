@@ -1,0 +1,9 @@
+{% extends "base.html" %}{% block title %}Помилка {{ code }}{% endblock %}{%
+block content %}
+<div class="error-page">
+    <div class="error-number">{{ code }}</div>
+    <h1>Щось пішло не так</h1>
+    <p>{{ message }}</p>
+    <a class="btn btn-forest" href="{{ url_for("index") }}"><i class="bi bi-house me-1"></i>На головну</a>
+</div>
+{% endblock %}

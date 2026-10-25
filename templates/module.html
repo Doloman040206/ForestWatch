@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}{{ cfg.title }}{% endblock %}
+
+{% block head %}
+<style>
+    .password-hash-cell {
+        width: 190px;
+        max-width: 190px;
+    }
+
+    .password-hash-preview {
+        display: block;
+        width: 170px;
+        max-width: 170px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-heading reveal">
+    <div>
+        <div class="eyebrow">РЕЄСТР ДАНИХ</div>
+        <h1>{{ cfg.icon }} {{ cfg.title }}</h1>
+        <p class="text-muted mb-0">
+            Отримані дані з реєстра.
+        </p>
+    </div>
+
+    {% if can_create_module(slug) %}
+    <a class="btn btn-forest" href="{{ url_for('create_record', slug=slug) }}">
+        <i class="bi bi-plus-lg me-1"></i>
+        Новий запис
+    </a>
+    {% endif %}
+</div>
+
+{% if db_error %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle me-2"></i>
+    Не вдалося завантажити записи цього розділу.
+    Перевірте структуру таблиці та її зв’язки.
+</div>
+{% endif %}
+
+<div class="panel-card reveal">
+    <div class="panel-toolbar">
+        <form class="search-form" method="get">
+            <i class="bi bi-search"></i>
+
+            <input
+                name="q"
+                value="{{ search }}"
+                placeholder="Пошук у текстових полях..."
+                aria-label="Пошук"
+            >
+
+            <button type="submit">Знайти</button>
+
+            {% if search %}
+            <a href="{{ url_for('module', slug=slug) }}" class="clear-search">
+                Скинути
+            </a>
+            {% endif %}
+        </form>
+
+        <span class="record-count">
+            <i class="bi bi-list-ul me-1"></i>
+            {{ rows|length }} записів показано (до 300)
+        </span>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+            <thead>
+                <tr>
+                    {% for col in columns %}
+                    <th {% if col == 'PasswordHash' %}class="password-hash-cell"{% endif %}>
+                        {{ col }}
+                    </th>
+                    {% endfor %}
+
+                    {% if can_edit_module(slug) or can_delete_module(slug) %}
+                    <th class="actions-column">Дії</th>
+                    {% endif %}
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in rows %}
+                <tr>
+                    {% for col in columns %}
+                    {% set val = row[col] %}
+
+                    <td {% if col == 'PasswordHash' %}class="password-hash-cell"{% endif %}>
+                        {% if val is none %}
+                            <span class="text-muted">—</span>
+
+                        {% elif col == 'PasswordHash' %}
+                            <span
+                                class="password-hash-preview"
+                                title="{{ val }}"
+                            >{{ val }}</span>
+
+                        {% elif val.__class__.__name__ == 'datetime' %}
+                            {{ val.strftime('%d.%m.%Y %H:%M') }}
+
+                        {% elif val.__class__.__name__ == 'date' %}
+                            {{ val.strftime('%d.%m.%Y') }}
+
+                        {% elif col == 'Status' or col == 'RiskLevel' or col == 'Priority' %}
+                            <span class="table-tag">{{ val }}</span>
+
+                        {% else %}
+                            {{ val }}
+                        {% endif %}
+                    </td>
+                    {% endfor %}
+
+                    {% if can_edit_module(slug) or can_delete_module(slug) %}
+                    <td class="text-nowrap">
+                        {% if can_edit_module(slug) %}
+                        <a
+                            class="icon-action"
+                            title="Редагувати"
+                            href="{{ url_for('edit_record', slug=slug, record_id=row[cfg.pk]) }}"
+                        >
+                            <i class="bi bi-pencil-square"></i>
+                        </a>
+                        {% endif %}
+
+                        {% if can_delete_module(slug) %}
+                        <form
+                            class="d-inline"
+                            method="post"
+                            action="{{ url_for('delete_record', slug=slug, record_id=row[cfg.pk]) }}"
+                            onsubmit="return confirm('Видалити запис? Дію не можна скасувати.');"
+                        >
+                            <button class="icon-action danger-action" title="Видалити">
+                                <i class="bi bi-trash3"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                    {% endif %}
+                </tr>
+
+                {% else %}
+                <tr>
+                    <td
+                        colspan="{{ columns|length + (1 if can_edit_module(slug) or can_delete_module(slug) else 0) }}"
+                        class="empty-state"
+                    >
+                        <i class="bi bi-folder2-open"></i>
+                        <strong>Записів не знайдено</strong>
+                        <span>
+                            Змініть пошук або, якщо маєте відповідні права,
+                            додайте запис.
+                        </span>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="panel-bottom">
+        <span>
+            {{ 'Режим перегляду' if not can_create_module(slug) and not can_edit_module(slug) else 'Доступні дії залежать від вашої ролі' }}
+        </span>
+
+        <span>
+            Розділ: <strong>{{ cfg.title }}</strong>
+        </span>
+    </div>
+</div>
+{% endblock %}

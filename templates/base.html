@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="uk">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>{% block title %}ForestWatch{% endblock %} · ForestWatch</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+              rel="stylesheet">
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+              rel="stylesheet">
+        <link rel="stylesheet"
+              href="{{ url_for('static', filename='css/app.css') }}">
+        <!-- Turbo Drive забезпечує переходи між сторінками без повного перезавантаження. -->
+        <script src="https://cdn.jsdelivr.net/npm/@hotwired/turbo@8.0.12/dist/turbo.es2017-umd.js"
+                defer></script>
+        <style>
+    .sidebar .side-link.active {
+      background: #e8f5ec;
+      color: #176b4b;
+      font-weight: 800;
+      box-shadow: inset 3px 0 0 #23865b;
+    }
+
+    .sidebar .side-link.active i {
+      color: #176b4b;
+    }
+
+    .sidebar .side-link.active span {
+      opacity: 1;
+    }
+
+    .topbar .nav-link.active {
+      color: #ffffff !important;
+      font-weight: 800;
+      background: #ffffff18;
+      border-radius: 8px;
+    }
+
+    .sidebar .side-link,
+    .topbar .nav-link {
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+        </style>
+        {% block head %}{% endblock %}
+    </head>
+    <body>
+        <nav class="navbar navbar-expand-lg navbar-dark topbar sticky-top">
+            <div class="container-fluid px-lg-4">
+                <a class="navbar-brand d-flex align-items-center gap-2"
+                   href="{{ url_for("index") if session.get('user_id') else url_for('login') }}">
+                    <span class="brand-mark">🌲</span>
+                    <span>
+                        Forest<span class="brand-light">Watch</span>
+                        <small class="d-block brand-sub">ЛІСОВИЙ МОНІТОРИНГ</small>
+                    </span>
+                </a>
+                <button class="navbar-toggler"
+                        data-bs-toggle="collapse"
+                        data-bs-target="#mainNav"
+                        aria-label="Відкрити меню">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <div class="navbar-nav ms-auto align-items-lg-center gap-lg-2">
+                        {% if session.get("user_id") %}
+                            <a class="nav-link{% if request.path == url_for('index') %} active{% endif %}"
+                               {% if request.path == url_for('index') %}aria-current="page"{% endif %}
+                               href="{{ url_for("index") }}">
+                                <i class="bi bi-grid-1x2 me-1"></i>Огляд
+                            </a>
+                            {% if can_access_page("map") %}
+                                <a class="nav-link{% if request.path == url_for('map_view') %} active{% endif %}"
+                                   {% if request.path == url_for('map_view') %}aria-current="page"{% endif %}
+                                   href="{{ url_for("map_view") }}">
+                                    <i class="bi bi-map me-1"></i>Карта
+                                </a>
+                            {% endif %}
+                            {% if can_access_page("reports") %}
+                                <a class="nav-link{% if request.path == url_for('reports') %} active{% endif %}"
+                                   {% if request.path == url_for('reports') %}aria-current="page"{% endif %}
+                                   href="{{ url_for("reports") }}">
+                                    <i class="bi bi-bar-chart-line me-1"></i>Аналітика
+                                </a>
+                            {% endif %}
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-light dropdown-toggle"
+                                        data-bs-toggle="dropdown">Мої розділи</button>
+                                <ul class="dropdown-menu dropdown-menu-end nav-register-menu">
+                                    {% for slug, cfg in nav_tables.items() %}
+                                        <li>
+                                            <a class="dropdown-item{% if request.path == url_for('module', slug=slug) or request.path.startswith('/module/' ~ slug ~ '/') %} active{% endif %}"
+                                               href="{{ url_for('module', slug=slug) }}">
+                                                {{ cfg.icon }} {{ cfg.title }}
+                                            </a>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            <span class="navbar-text user-pill">
+                                <i class="bi bi-person-circle me-1"></i>
+                                {{ session.get("full_name") }} · {{ session.get("role") }}
+                            </span>
+                            <a class="btn btn-sm btn-light" href="{{ url_for("logout") }}">Вийти</a>
+                        {% else %}
+                            <a class="btn btn-sm btn-light" href="{{ url_for("login") }}">
+                                Увійти <i class="bi bi-arrow-right"></i>
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <div class="app-shell">
+            {% if session.get("user_id") %}
+                <aside class="sidebar d-none d-xl-block" id="app-sidebar">
+                    <div class="sidebar-label">РОБОЧИЙ ПРОСТІР</div>
+                    <a class="side-link{% if request.path == url_for('index') %} active{% endif %}"
+                       {% if request.path == url_for('index') %}aria-current="page"{% endif %}
+                       href="{{ url_for("index") }}">
+                        <i class="bi bi-speedometer2"></i>
+                        Панель огляду
+                    </a>
+                    {% if can_access_page("map") %}
+                        <a class="side-link{% if request.path == url_for('map_view') %} active{% endif %}"
+                           {% if request.path == url_for('map_view') %}aria-current="page"{% endif %}
+                           href="{{ url_for("map_view") }}">
+                            <i class="bi bi-geo-alt"></i>
+                            Оперативна карта
+                        </a>
+                    {% endif %}
+                    {% if can_access_page("reports") %}
+                        <a class="side-link{% if request.path == url_for('reports') %} active{% endif %}"
+                           {% if request.path == url_for('reports') %}aria-current="page"{% endif %}
+                           href="{{ url_for("reports") }}">
+                            <i class="bi bi-graph-up-arrow"></i>
+                            Аналітика і звіти
+                        </a>
+                    {% endif %}
+                    {% if directory_tables %}
+                        <div class="sidebar-label mt-4">ДОВІДНИКИ</div>
+                        {% for slug, cfg in directory_tables.items() %}
+                            <a class="side-link{% if request.path == url_for('module', slug=slug) or request.path.startswith('/module/' ~ slug ~ '/') %} active{% endif %}"
+                               {% if request.path == url_for('module', slug=slug) or request.path.startswith('/module/' ~ slug ~ '/') %}aria-current="page"{% endif %}
+                               href="{{ url_for('module', slug=slug) }}">
+                                <span>{{ cfg.icon }}</span>
+                                {{ cfg.title }}
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                    {% if event_tables %}
+                        <div class="sidebar-label mt-4">ПОДІЇ ТА РЕАГУВАННЯ</div>
+                        {% for slug, cfg in event_tables.items() %}
+                            <a class="side-link{% if request.path == url_for('module', slug=slug) or request.path.startswith('/module/' ~ slug ~ '/') %} active{% endif %}"
+                               {% if request.path == url_for('module', slug=slug) or request.path.startswith('/module/' ~ slug ~ '/') %}aria-current="page"{% endif %}
+                               href="{{ url_for('module', slug=slug) }}">
+                                <span>{{ cfg.icon }}</span>
+                                {{ cfg.title }}
+                            </a>
+                        {% endfor %}
+                    {% endif %}
+                </aside>
+            {% endif %}
+            <main class="main-content{% if not session.get('user_id') %} main-public{% endif %}">
+                <div class="container-fluid content-wrap">
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                        {% if messages %}
+                            <div class="flash-stack">
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} alert-dismissible fade show shadow-sm"
+                                         role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                    {% block content %}{% endblock %}
+                    <footer class="app-footer">
+                        <span>ForestWatch</span>
+                        <span>© {{ current_year }}</span>
+                    </footer>
+                </div>
+            </main>
+        </div>
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+        {% block scripts %}{% endblock %}
+    </body>
+</html>

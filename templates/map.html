@@ -1,0 +1,176 @@
+{% extends "base.html" %} {% block title %}Оперативна карта{% endblock %} {%
+block head %}
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+/>
+{% endblock %} {% block content %}
+<div class="page-heading reveal">
+  <div>
+    <div class="eyebrow">ГЕОПРОСТОРОВИЙ МОНІТОРИНГ</div>
+    <h1>Оперативна карта</h1>
+    <p class="text-muted mb-0">
+      Лісові ділянки, підозри та підтверджені пожежі
+    </p>
+  </div>
+</div>
+<div class="map-legend panel-card">
+  <span>
+    <i class="legend-dot plot-dot"></i>
+    Лісові ділянки ({{ plots|length }})
+  </span>
+  <span>
+    <i class="legend-dot suspicion-dot"></i>
+    Підозри ({{ suspicions|length }})
+  </span>
+  <span>
+    <i class="legend-dot fire-dot"></i>
+    Пожежі ({{ fires|length }})
+  </span>
+</div>
+<div id="forest-map" class="forest-map reveal"></div>
+<div class="map-note">
+  <i class="bi bi-info-circle"></i>
+  Для завантаження карти потрібне інтернет-з'єднання.
+</div>
+{% endblock %} {% block scripts %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script id="plot-data" type="application/json">
+  {{ plots | tojson }}
+</script>
+<script id="suspicion-data" type="application/json">
+  {{ suspicions | tojson }}
+</script>
+<script id="fire-data" type="application/json">
+  {{ fires | tojson }}
+</script>
+<script>
+  (function () {
+    const mapElement = document.getElementById("forest-map");
+    if (!mapElement || typeof L === "undefined") {
+      return;
+    }
+    if (mapElement.dataset.mapInitialized === "true") {
+      return;
+    }
+    mapElement.dataset.mapInitialized = "true";
+    const plotData = JSON.parse(
+      document.getElementById("plot-data").textContent,
+    );
+    const suspicionData = JSON.parse(
+      document.getElementById("suspicion-data").textContent,
+    );
+    const fireData = JSON.parse(
+      document.getElementById("fire-data").textContent,
+    );
+    const map = L.map(mapElement).setView([48.5, 24.5], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 18,
+      attribution: "&copy; OpenStreetMap",
+    }).addTo(map);
+    const plotBounds = [];
+    const allBounds = [];
+    function addRows(rows, color, title, description, isPlot) {
+      rows.forEach(function (row) {
+        const lat = Number(row.Latitude);
+        const lon = Number(row.Longitude);
+        if (
+          !Number.isFinite(lat) ||
+          !Number.isFinite(lon) ||
+          lat < -90 ||
+          lat > 90 ||
+          lon < -180 ||
+          lon > 180
+        ) {
+          return;
+        }
+        const marker = L.circleMarker([lat, lon], {
+          radius: 8,
+          color: color,
+          fillColor: color,
+          fillOpacity: 0.8,
+          weight: 2,
+        }).addTo(map);
+        marker.bindPopup(
+          "<strong>" +
+            title +
+            "</strong><br>" +
+            description(row) +
+            "<br><small>" +
+            lat.toFixed(5) +
+            ", " +
+            lon.toFixed(5) +
+            "</small>",
+        );
+        const point = [lat, lon];
+        allBounds.push(point);
+        if (isPlot) {
+          plotBounds.push(point);
+        }
+      });
+    }
+    addRows(
+      plotData,
+      "#23865b",
+      "Лісова ділянка",
+      function (row) {
+        return (
+          "Ділянка " +
+          row.PlotNumber +
+          " · ризик: " +
+          (row.RiskLevel || "не вказано")
+        );
+      },
+      true,
+    );
+    addRows(
+      suspicionData,
+      "#e5a32d",
+      "Підозра на займання",
+      function (row) {
+        return (
+          "№" +
+          row.SuspicionID +
+          " · " +
+          (row.Priority || "без пріоритету") +
+          " · " +
+          (row.Status || "без статусу")
+        );
+      },
+      false,
+    );
+    addRows(
+      fireData,
+      "#d84c45",
+      "Пожежа",
+      function (row) {
+        const area = row.AreaHectares == null ? "—" : row.AreaHectares;
+        return (
+          "№" +
+          row.FireID +
+          " · " +
+          (row.Status || "без статусу") +
+          " · площа: " +
+          area +
+          " га"
+        );
+      },
+      false,
+    );
+    if (plotBounds.length > 0) {
+      map.fitBounds(plotBounds, {
+        padding: [30, 30],
+        maxZoom: 11,
+      });
+    } else if (allBounds.length > 0) {
+      map.fitBounds(allBounds, {
+        padding: [30, 30],
+        maxZoom: 11,
+      });
+    }
+    requestAnimationFrame(function () {
+      map.invalidateSize();
+    });
+  })();
+</script>
+{% endblock %}

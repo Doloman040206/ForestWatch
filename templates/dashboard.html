@@ -1,0 +1,150 @@
+{% extends "base.html" %} {% block title %}Панель огляду{% endblock %} {% block
+content %}
+<div class="page-heading reveal">
+    <div>
+        <div class="eyebrow">ЦЕНТР ОПЕРАТИВНОГО МОНІТОРИНГУ</div>
+        <h1>Панель огляду <span class="heading-emoji">🌲</span></h1>
+        <p class="text-muted mb-0">Стан лісових територій, сигнали небезпеки та оперативне реагування.</p>
+    </div>
+    <div class="heading-actions">
+        {% if can_create_module("suspicions") %}
+            <a class="btn btn-forest"
+               href="{{ url_for('create_record', slug='suspicions') }}">
+                <i class="bi bi-plus-lg me-1"></i>Нова підозра
+            </a>
+        {% endif %}
+    </div>
+</div>
+<div class="hero-panel reveal">
+    <div class="hero-copy">
+        <span class="hero-kicker">EARLY DETECTION · SMART FORESTRY</span>
+        <h2>
+            Помітити раніше.
+            <br />
+            <em>Відреагувати швидше.</em>
+        </h2>
+        <p>
+            Єдине робоче середовище для контролю ділянок, перевірки сигналів засобами
+            БПЛА та супроводу пожеж.
+        </p>
+        <div class="hero-actions">
+            {% if can_access_page("map") %}
+                <a href="{{ url_for("map_view") }}" class="btn btn-light">
+                    Відкрити оперативну карту
+                    <i class="bi bi-arrow-up-right ms-1"></i>
+                </a>
+            {% endif %}
+            {% if can_access_page("reports") %}
+                <a href="{{ url_for("reports") }}" class="btn btn-hero-outline">Переглянути аналітику</a>
+            {% endif %}
+        </div>
+    </div>
+    <div class="hero-art">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="hero-tree">🌲</div>
+        <div class="hero-drone">🛸</div>
+        <div class="hero-coordinate">
+            48°15' N
+            <br />
+            24°05' E
+        </div>
+    </div>
+</div>
+<div class="section-heading reveal">
+    <div>
+        <h2>Поточна ситуація</h2>
+        <p>Зведені показники оперативного моніторингу.</p>
+    </div>
+    <span class="section-date">
+        <i class="bi bi-arrow-repeat me-1"></i>
+        Оновіть сторінку для повторного читання
+    </span>
+</div>
+<div class="stats-grid reveal">
+    <div class="stat-card stat-green">
+        <div class="stat-top">
+            <span>Лісові ділянки</span>
+            <i class="bi bi-tree"></i>
+        </div>
+        <div class="stat-value">{{ stats.get('plots', '—') }}</div>
+        <div class="stat-foot">Наявні у реєстрі</div>
+    </div>
+    <div class="stat-card stat-amber">
+        <div class="stat-top">
+            <span>Підозри на займання</span>
+            <i class="bi bi-exclamation-triangle"></i>
+        </div>
+        <div class="stat-value">{{ stats.get('suspicions', '—') }}</div>
+        <div class="stat-foot">Не відхилені сигнали</div>
+    </div>
+    <div class="stat-card stat-red">
+        <div class="stat-top">
+            <span>Активні пожежі</span>
+            <i class="bi bi-fire"></i>
+        </div>
+        <div class="stat-value">{{ stats.get('fires', '—') }}</div>
+        <div class="stat-foot">Потребують контролю</div>
+    </div>
+    <div class="stat-card stat-blue">
+        <div class="stat-top">
+            <span>Безпілотні апарати</span>
+            <i class="bi bi-airplane"></i>
+        </div>
+        <div class="stat-value">{{ stats.get('uavs', '—') }}</div>
+        <div class="stat-foot">Наявні у реєстрі</div>
+    </div>
+</div>
+<div class="section-heading reveal">
+    <div>
+        <h2>Останні сигнали</h2>
+        <p>Оперативна черга перевірки потенційних займань.</p>
+    </div>
+    {% if can_view_module("suspicions") %}
+        <a class="text-link" href="{{ url_for('module', slug='suspicions') }}">
+            Відкрити реєстр <i class="bi bi-arrow-right"></i>
+        </a>
+    {% endif %}
+</div>
+<div class="panel-card reveal">
+    <div class="table-responsive">
+        <table class="table align-middle mb-0">
+            <thead>
+                <tr>
+                    <th>№</th>
+                    <th>Час виявлення</th>
+                    <th>Ділянка</th>
+                    <th>Джерело</th>
+                    <th>Пріоритет</th>
+                    <th>Статус</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in latest %}
+                    <tr>
+                        <td class="fw-semibold">#{{ row.SuspicionID }}</td>
+                        <td>
+                            {{ row.DetectedAt.strftime("%d.%m.%Y %H:%M") if row.DetectedAt else
+                                '—' }}
+                        </td>
+                        <td>{{ row.PlotNumber or 'Не визначено' }}</td>
+                        <td>{{ row.SourceName }}</td>
+                        <td>
+                            <span class="priority priority-{{ row.Priority|lower }}">{{ row.Priority }}</span>
+                        </td>
+                        <td>{{ row.Status }}</td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <i class="bi bi-inbox"></i>
+                            <strong>Поки немає записів для показу</strong>
+                            <span>Коли з’являться нові сигнали, вони відображатимуться тут.</span>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

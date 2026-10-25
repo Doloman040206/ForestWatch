@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}
+  {{ 'Новий запис' if mode == 'new' else 'Редагування' }} · {{ cfg.title }}
+{% endblock %}
+{% block content %}
+<div class="page-heading reveal">
+  <div>
+    <div class="eyebrow">
+      {{ 'СТВОРЕННЯ ЗАПИСУ' if mode == 'new' else 'РЕДАГУВАННЯ ЗАПИСУ' }}
+    </div>
+    <h1>
+      {{ 'Новий запис' if mode == 'new' else 'Редагування запису' }}
+    </h1>
+    <p class="text-muted mb-0">
+      {{ cfg.title }}.
+    </p>
+  </div>
+  <a class="btn btn-outline-secondary" href="{{ url_for('module', slug=slug) }}">
+    <i class="bi bi-arrow-left me-1"></i>До реєстру
+  </a>
+</div>
+<div class="form-panel reveal">
+  <div class="form-panel-heading">
+    <div class="form-heading-icon">{{ cfg.icon }}</div>
+    <div>
+      <h2>{{ cfg.title }}</h2>
+      <p>Поля зі зірочкою обов'язкові для заповнення.</p>
+    </div>
+  </div>
+  <form method="post" class="record-form">
+    <div class="form-grid">
+      {% for col, label, kind, required in cfg.fields %}
+        <div class="form-field {% if kind == 'textarea' %}field-wide{% endif %}">
+          <label class="form-label" for="{{ col }}">
+            {{ label }}
+            {% if required %}
+              <span class="required-star"> *</span>
+            {% endif %}
+          </label>
+          {% if kind == 'textarea' %}
+            <textarea 
+              class="form-control" 
+              id="{{ col }}" 
+              name="{{ col }}" 
+              rows="3" 
+              {% if required %}required{% endif %}
+            >{{ record.get(col, '') if record.get(col) is not none else '' }}</textarea>
+
+          {% elif kind.startswith('fk:') %}
+            <select class="form-select" id="{{ col }}" name="{{ col }}" {% if required %}required{% endif %}>
+              <option value="">— Оберіть значення —</option>
+              {% for opt in options.get(col, []) %}
+                <option 
+                  value="{{ opt.id }}" 
+                  {% if record.get(col) is not none and (record.get(col)|string) == (opt.id|string) %}selected{% endif %}
+                >
+                  {{ opt.id }} · {{ opt.label or 'Без назви' }}
+                </option>
+              {% endfor %}
+            </select>
+          {% elif kind.startswith('select:') %}
+            <select class="form-select" id="{{ col }}" name="{{ col }}" {% if required %}required{% endif %}>
+              <option value="">— Оберіть —</option>
+              {% for opt in kind[7:].split('|') %}
+                <option 
+                  value="{{ opt }}" 
+                  {% if record.get(col) is not none and (record.get(col)|string) == opt %}selected{% endif %}
+                >
+                  {{ 'Так' if col == 'FireConfirmed' and opt == '1' else ('Ні' if col == 'FireConfirmed' and opt == '0' else opt) }}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input 
+              class="form-control" 
+              id="{{ col }}" 
+              name="{{ col }}" 
+              type="{{ kind if kind in ['text', 'email', 'date', 'number', 'datetime-local', 'password'] else 'text' }}" 
+              value="{{ '' if kind == 'password' else (record.get(col).strftime('%Y-%m-%dT%H:%M') if kind == 'datetime-local' and record.get(col) else (record.get(col).strftime('%Y-%m-%d') if kind == 'date' and record.get(col) else (record.get(col, '') if record.get(col) is not none else ''))) }}" 
+              {% if kind == 'number' %}step="any"{% endif %}
+              {% if kind == 'password' %} 
+                autocomplete="new-password" 
+                placeholder="Задайте пароль" 
+                {% if mode == 'new' %}required{% endif %}
+              {% elif required %} 
+                required 
+              {% endif %}
+            >
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+    <div class="form-actions">
+      <a class="btn btn-outline-secondary" href="{{ url_for('module', slug=slug) }}">
+        Скасувати
+      </a>
+      <button class="btn btn-forest" type="submit">
+        <i class="bi bi-check2-circle me-1"></i>
+        {{ 'Створити запис' if mode == 'new' else 'Зберегти зміни' }}
+      </button>
+    </div>
+  </form>
+</div>
+{% endblock %}
